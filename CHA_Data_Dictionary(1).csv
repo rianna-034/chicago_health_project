@@ -1,0 +1,19 @@
+Variable,Description
+Name,Community area name
+GEOID,Geographic ID for community area
+Latitude,Geographic centroid latitude
+Longitude,Geographic centroid longitude
+Population,Total population
+POP_2020-2024,Average population estimate (ACS)
+PCT-W_2020-2024,Percent White population
+Environmental_Justice_Count (CHAKNKC_2023),Number of residents in environmental justice priority areas
+Air_Quality_Perception_Count (CHARIPZ_2023-2024),Count reporting good/excellent air quality
+Air_Quality_Perception_Rate (CHASBQJ_2023-2024),Percent reporting good/excellent air quality
+Trust_Government_Pollution (CHABXHK_2023-2024),Percent trusting local government on pollution decisions
+Obesity_Prevalence (HCSOB_2023-2024),Percent of adults with obesity
+Hypertension_Prevalence (HCSHYT_2023-2024),Percent of adults with hypertension
+Diabetes_Prevalence (HCSDIA_2023-2024),Percent of adults with diabetes
+Asthma_Prevalence (HCSATH_2023-2024),Percent of adults with asthma
+Park_Metric (PMC_2020),Park coverage or access metric
+Traffic_Risk_Factor (TRF_2020),Traffic-related environmental factor
+Layer,Geographic grouping (Community area)

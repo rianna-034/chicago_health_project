@@ -1,0 +1,85 @@
+---
+title: "Chicago Health Equity: An Integrated Spatial Analysis"
+subtitle: "Uncovering the Interplay of Environment, Society, and Biology"
+author: "Aanshi Vashi, Pratham Shah, Riaam Al Frijie"
+date: "`r Sys.Date()`"
+
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    source_code: embed
+    theme:
+      version: 4
+      bootswatch: cosmo
+      primary: "honeydew"
+      base_font:
+        google: "Source Sans Pro"
+      heading_font:
+        google: "Montserrat"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+install.packages('plotly') # Install plotly package
+library(plotly)
+install.packages('flexdashboard') # Install flexdashboard package
+library(flexdashboard)
+install.packages('palmerpenguins') # Install palmerpenguins package
+library(palmerpenguins)
+install.packages('DT') # Install DT package
+library(DT)
+install.packages('sf') # Install sf package
+library(sf)
+#install.packages('spData')
+library(spData)
+#install.packages('ggplot2')
+library(ggplot2)
+#install.packages('patchwork')
+library(patchwork)
+#install.packages('dplyr')
+library(dplyr)
+#install.packages('scales')
+library(scales)
+
+# Load data
+raw_data <- read.csv("Chi_Health_Atlas_Data(1).csv", check.names = FALSE)
+```
+
+```{r}
+df <- raw_data %>%
+  select(
+    PMC_2020,
+    `HCSOB_2023-2024`
+  ) %>%
+  drop_na()
+
+head(df)
+```
+
+
+
+
+
+```{r}
+# Value box 1
+obesity_label <- paste0(round(mean(df$`HCSOB_2023-2024`, na.rm = TRUE), 1), "%")
+valueBox(obesity_label, icon = "fa-weight-scale", color = "warning")
+
+```
+
+```{r}
+# Value box 2
+high_pollution_count <- sum(df$PMC_2020 > 9.5, na.rm = TRUE)
+valueBox(high_pollution_count, icon = "fa-smog", color = "danger")
+
+```
+
+```{r}
+# Value box 3
+valueBox(nrow(df), icon = "fa-building-columns", color = "primary")
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
