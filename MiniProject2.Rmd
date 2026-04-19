@@ -328,3 +328,154 @@ summary(model2)
 
 ### Interpretation
 Air pollution becomes more meaningful when combined with demographic factors. This suggests health outcomes are shaped by both environmental and social conditions rather than a single variable.
+
+Data Explorer {data-icon="fa-database"}
+=====================================
+
+Row {data-height=600}
+-----------------------------------------------------------------------
+
+### Correlation Structure
+
+```{r}
+heat_data <- df_clean %>%
+  mutate(
+    income_bin = ntile(PMC_2020, 5),
+    race_bin = ntile(PCT_W_2020_2024, 5)
+  ) %>%
+  group_by(income_bin, race_bin) %>%
+  summarise(
+    avg_disease = mean(HCSOB_2023_2024),
+    count = n(),
+    .groups = "drop"
+  )
+
+plot_ly(zsmooth = "best",
+  heat_data,
+  x = ~factor(income_bin, labels = c("Lowest", "Low", "Mid", "High", "Highest")),
+  y = ~factor(race_bin, labels = c("Lowest % White", "Low", "Mid", "High", "Highest % White")),
+  z = ~avg_disease,
+  type = "heatmap",
+  colorscale = "Viridis",
+  
+  text = ~paste(
+    "Income Group:", income_bin,
+    "<br>Race Group:", race_bin,
+    "<br>Avg Disease:", round(avg_disease, 2),
+    "<br>Communities:", count
+  ),
+  hoverinfo = "text"
+) %>%
+  layout(
+    title = "Overlapping Effects of Income and Demographics on Disease Burden",
+    xaxis = list(title = "Income Level"),
+    yaxis = list(title = "Demographic Composition (% White)")
+  )
+```
+
+### Interpretation
+This heatmap does not represent simple correlation.
+Instead, it shows the joint effect of income and demographic composition on disease burden.
+Key insights:
+The highest disease burden appears in low-income and low % white communities
+As income increases, disease burden consistently decreases
+However, this effect is not uniform across demographic groups, indicating interaction effects
+This reveals that:
+Health outcomes are shaped by overlapping structural factors, not isolated variables
+Income and demographics interact, amplifying or reducing health disparities
+
+
+Row {data-height=600}
+-----------------------------------------------------------------------
+
+###  3. VISUALIZE THE INTERACTION EFFECT
+
+```{r}
+
+model <- lm(HCSOB_2023_2024 ~ PMC_2020, data = df_clean)
+stats <- summary(model)
+
+
+r_sq <- round(stats$r.squared, 3)
+p_val <- format.pval(stats$coefficients[2,4], digits = 3)
+
+p_model <- ggplot(df_clean, 
+                  aes(x = PMC_2020, 
+                      y = HCSOB_2023_2024, 
+                      color = PCT_W_2020_2024,
+                      text = paste("Name:", Name, "<br>Income:", PMC_2020, "<br>Burden:", HCSOB_2023_2024))) +
+  geom_point(size = 3, alpha = 0.7) +
+  # se = TRUE adds the 'significance' ribbon (Confidence Interval)
+  geom_smooth(method = "lm", se = TRUE, color = "black", fill = "gray80", alpha = 0.5) + 
+  scale_color_viridis_c(option = "plasma") +
+geom_smooth(aes(group = PCT_W_2020_2024 > 50), method = "lm", se = FALSE)+
+  labs(
+    title = "Model Interpretation: Income, Demographics, and Disease Burden",
+    subtitle = paste("Adj R-Squared:", r_sq, "| P-value:", p_val),
+    x = "Income",
+    y = "Chronic Disease Burden",
+    color = "% White"
+  ) +
+  theme_minimal(base_size = 14)
+
+ggplotly(p_model, tooltip = "text")
+```
+### Interpretation
+The model demonstrates a clear inverse relationship between income and chronic disease burden, as indicated by the negative slope of the regression line. Communities with higher median income generally exhibit lower levels of chronic disease, supporting well-established links between socioeconomic status and health outcomes.
+The reported R-squared value suggests that income explains a meaningful portion of the variability in disease burden
+
+Row{data-height=300}
+-------------------------------------------------------
+
+### INTERACTIVE MODEL TABLE
+
+```{r model, echo=FALSE}
+library(broom)
+
+model <- lm(
+  HCSOB_2023_2024 ~ PMC_2020 * PCT_W_2020_2024 + POP_2020_2024,
+  data = df_clean
+)
+
+model_table <- broom::tidy(model)
+
+datatable(
+  model_table,
+  options = list(
+    pageLength = 5,
+    dom = 't',
+    ordering = TRUE
+  ),
+  rownames = FALSE
+)
+```
+Row {data-height=300}
+-----------------------------------------------------------------------
+
+Data Explorer
+```{r}
+datatable(df_clean,
+          options = list(pageLength = 8, scrollX = TRUE),
+          rownames = FALSE)
+```
+
+### Purpose
+This interactive table ensures:
+Transparency
+Reproducibility
+Direct engagement with raw data
+Users can explore, filter, and validate all findings.
+
+Row {data-height=300}
+-----------------------------------------------------------------------
+
+### Final Scientific Interpretation
+Health disparities in Chicago emerge from systemic, interconnected factors:
+Economic inequality drives differential exposure and access
+Demographic patterns reflect historical structural inequities
+Spatial clustering indicates place-based risk environments
+
+### Conclusion
+Chronic disease burden is not randomly distributed —
+it is shaped by a combination of social, economic, and geographic determinants.
+This analysis provides a framework for targeted, data-driven public health intervention
