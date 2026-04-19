@@ -45,7 +45,7 @@ library(dplyr)
 library(scales)
 
 # LOAD DATA
-df <- read.csv("Chi_Health_Atlas_Data.csv")
+df <- read.csv("Chi_Health_Atlas_Data(1).csv")
 
 # CLEAN COLUMN NAMES
 names(df) <- gsub("-", "_", names(df))
