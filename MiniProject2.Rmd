@@ -166,27 +166,24 @@ Row {data-height=600}
 ### Demographic Structure vs Health
 ```{r}
 df_clean <- df_clean %>%
-  mutate(hover_violin = paste0(
-    "<b>", name, "</b><br>",
-    "Poverty Group: ", income_group, "<br>",
-    "Obesity Count: ", scales::comma(round(hcsob_2023_2024, 0))
-  ))
+  mutate(
+    income_group = ntile(PMC_2020, 4) %>%
+      factor(labels = c("Low", "Lower-Mid", "Upper-Mid", "High"))
+  )
 
-p4 <- ggplot(df_clean,
-             aes(x = income_group, y = hcsob_2023_2024,
-                 fill = income_group, text = hover_violin)) +
+p4 <- ggplot(df_clean, aes(x = income_group, y = HCSOB_2023_2024, fill = income_group)) +
   geom_violin(alpha = 0.6) +
   geom_boxplot(width = 0.2, fill = "white") +
   scale_fill_viridis_d() +
   labs(
-    x     = "Poverty Group",
-    y     = "Obesity Count",
-    title = "Obesity Burden Across Poverty Groups"
+    x = "Income Group",
+    y = "Chronic Disease Burden",
+    title = "Disease Burden Across Income Groups"
   ) +
   theme_minimal(base_size = 14) +
   theme(legend.position = "none")
 
-ggplotly(p4, tooltip = "text")
+ggplotly(p4)
 ```
 ### Interpretation
 Demographic composition shows strong alignment with health disparities.
