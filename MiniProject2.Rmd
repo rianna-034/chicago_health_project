@@ -358,8 +358,6 @@ Row {data-height=600}
 
 model <- lm(HCSOB_2023_2024 ~ PMC_2020, data = df_clean)
 stats <- summary(model)
-
-
 r_sq <- round(stats$r.squared, 3)
 p_val <- format.pval(stats$coefficients[2,4], digits = 3)
 
@@ -384,6 +382,7 @@ geom_smooth(aes(group = PCT_W_2020_2024 > 50), method = "lm", se = FALSE)+
 
 ggplotly(p_model, tooltip = "text")
 ```
+
 ### Interpretation
 The model shows a clear positive relationship between poverty rate and chronic disease burden. The two split regression lines — one for majority-white neighborhoods (% white > 50) and one for minority-majority neighborhoods — reveal that the slope is steeper in non-white communities: the same increase in poverty translates to a larger jump in disease burden, confirming an interaction effect between race and poverty that compounds health risk.
 
@@ -393,8 +392,7 @@ Row{data-height=300}
 ### INTERACTIVE MODEL TABLE
 
 ```{r model, echo=FALSE}
-library(broom)
-
+library(broom) 
 model <- lm(
   HCSOB_2023_2024 ~ PMC_2020 * PCT_W_2020_2024 + POP_2020_2024,
   data = df_clean
@@ -412,17 +410,12 @@ datatable(
   rownames = FALSE
 )
 ```
+
 Row {data-height=300}
 -----------------------------------------------------------------------
 
 Data Explorer
 ```{r}
-### Data Explorer
-
-```{r}
-# ── CHANGE 9: Only show meaningful, renamed columns ───────────────────────────
-# Previously dumped all raw columns, including cryptic coded names.
-datatable(
   df_clean %>%
     select(
       Neighborhood  = name,
@@ -438,8 +431,6 @@ datatable(
   rownames = FALSE
 )
 ```
-```
-
 ### Purpose
 This interactive table ensures:
 Transparency
