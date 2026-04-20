@@ -21,7 +21,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(tidyverse)
 # install.packages('plotly') # Install plotly package
 library(plotly)
@@ -128,20 +128,6 @@ valueBox(high_risk, caption = "Neighborhoods in Top Obesity Quartile",
          icon = "fa-triangle-exclamation", color = "primary")
 ```
 
-### Value box 4
-
-```{r}
-high_risk <- sum(df_clean$hcsob_2023_2024 >
-                   quantile(df_clean$hcsob_2023_2024, 0.75, na.rm = TRUE))
-
-valueBox(
-  value   = high_risk,
-  caption = "High Disease Burden Neighborhoods",
-  icon    = "fa-triangle-exclamation",
-  color   = "warning"
-)
-```
-
 Row {data-height=200}
 -----------------------------------------------------------------------
 
@@ -162,24 +148,25 @@ Row {data-height=600}
 ### Demographic Structure vs Health
 ```{r}
 plot_ly(df_clean,
-        x        = ~access_group,
+        x        = ~income_group, 
         y        = ~obesity_rate,
-        color    = ~access_group,
+        color    = ~income_group,
         colors   = viridis::viridis(4),
         type     = "violin",
         box      = list(visible = TRUE),
         meanline = list(visible = TRUE),
         text     = ~paste0("<b>", name, "</b><br>",
-                           "Access Group: ",  access_group, "<br>",
+                           "Income Group: ",  income_group, "<br>",
                            "Obesity Rate: ",  round(obesity_rate, 2), "%<br>",
                            "Uninsured: ",     round(uninsured_rate, 1), "%"),
         hoverinfo = "text") %>%
   layout(
-    title      = "Obesity Rate by Insurance Access Group",
-    xaxis      = list(title = "Uninsured Rate Group"),
+    title      = "Obesity Rate by Income/Poverty Group",
+    xaxis      = list(title = "Poverty Level Group"),
     yaxis      = list(title = "Obesity Rate (%)"),
     showlegend = FALSE,
     hoverlabel = list(bgcolor = "white", font = list(size = 13))
+  )
 ```
 ### Interpretation
 Neighborhoods with the highest uninsured rates carry significantly greater obesity burden. The distribution widens at higher uninsured levels, reflecting that barriers to preventive care compound over time — uninsured residents skip screenings, delay treatment, and face worse metabolic outcomes as a result.
@@ -204,10 +191,9 @@ plot_ly(
   ),
   text = ~paste0(
     "<b>", name, "</b><br>",
-    "Obesity Rate: ",    round(obesity_rate,   2), "%<br>",
+    "Obesity Rate: ",    round(obesity_rate, 2), "%<br>",
     "Uninsured Rate: ",  round(uninsured_rate, 1), "%<br>",
-    "Air Quality: ",     round(air_quality,    1), "%<br>",
-    "Traffic Risk: ",    round(traffic_risk,   0)
+    "PM2.5 Level: ",     round(poverty_rate, 1) # Changed from air_quality to poverty_rate
   ),
   hoverinfo = "text"
 ) %>%
@@ -232,20 +218,30 @@ Row {data-height=600}
 
 ### Income Distribution and Inequality
 ```{r}
-p1 <- ggplot(df_clean, aes(x = "All Communities", y = PMC_2020)) +
-  geom_violin(fill = "#2C7FB8", alpha = 0.6, color = NA) +
-  geom_boxplot(width = 0.15, fill = "white", outlier.shape = NA) +
-  geom_jitter(width = 0.08, alpha = 0.3, color = "#08306B") +
-  labs(
-    y = "Median Per Capita Income",
-    x = NULL,
-    title = "Income Distribution Across Communities"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(axis.text.x = element_blank())
 
-ggplotly(p1)
+df_plot <- df_clean %>%
+  arrange(uninsured_rate) %>%
+  mutate(name = factor(name, levels = name))
+
+p_dots <- ggplot(df_plot, aes(x = uninsured_rate, y = name, text = paste0("<b>", name, "</b><br>",
+                               "Uninsured Rate: ", round(uninsured_rate, 1), "%<br>",
+                               "Obesity Rate: ", round(obesity_rate, 1), "%"))) +
+  # This line creates the 'Lollipop' stem for a sophisticated look
+  geom_segment(aes(x = 0, xend = uninsured_rate, y = name, yend = name), color = "black", size = 0.2) +
+  geom_point(aes(color = uninsured_rate), size = 2.5) +
+  scale_color_viridis_c(option = "mako", direction = -1) +
+  theme_minimal(base_size = 11) +
+  labs(x = "Uninsured Rate (%)", y = NULL, title = "Healthcare Access by Neighborhood") +
+  theme(
+    panel.grid.major.y = element_blank(), 
+    axis.text.y = element_text(size = 6), 
+    legend.position = "none")
+
+
+ggplotly(p_dots, tooltip = "text") %>% 
+  layout(height = 900)
 ```
+
 ### Interpretation
 The income distribution is right-skewed, indicating a concentration of wealth in a small subset of communities.This inequality is a critical upstream determinant of health, influencing access to care, nutrition, and environmental exposure.
 
@@ -399,7 +395,6 @@ plot_ly(
 ### Interpretation
 This heatmap does not represent simple correlation.
 Instead, it shows the joint effect of income and demographic composition on disease burden.
-Key insights:
 The highest disease burden appears in low-income and low % white communities
 As income increases, disease burden consistently decreases
 However, this effect is not uniform across demographic groups, indicating interaction effects
