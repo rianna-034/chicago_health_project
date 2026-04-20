@@ -409,28 +409,28 @@ Row {data-height=600}
 ###  3. VISUALIZE THE INTERACTION EFFECT
 
 ```{r}
-
-model <- lm(HCSOB_2023_2024 ~ PMC_2020, data = df_clean)
+model <- lm(obesity_rate ~ pmc_2020, data = df_clean)
 stats <- summary(model)
-r_sq <- round(stats$r.squared, 3)
+r_sq  <- round(stats$r.squared, 3)
 p_val <- format.pval(stats$coefficients[2,4], digits = 3)
-
 p_model <- ggplot(df_clean, 
-                  aes(x = PMC_2020, 
-                      y = HCSOB_2023_2024, 
-                      color = PCT_W_2020_2024,
-                      text = paste("Name:", Name, "<br>Income:", PMC_2020, "<br>Burden:", HCSOB_2023_2024))) +
+                  aes(x     = pmc_2020, 
+                      y     = obesity_rate, 
+                      color = percent_white, # Use the name you defined in setup
+                      text  = paste0("<b>", name, "</b><br>",
+                                     "PM2.5 Level: ", round(pmc_2020, 2), "<br>",
+                                     "Obesity Rate: ", round(obesity_rate, 1), "%"))) +
   geom_point(size = 3, alpha = 0.7) +
-  # se = TRUE adds the 'significance' ribbon (Confidence Interval)
   geom_smooth(method = "lm", se = TRUE, color = "black", fill = "gray80", alpha = 0.5) + 
-  scale_color_viridis_c(option = "plasma") +
-geom_smooth(aes(group = PCT_W_2020_2024 > 50), method = "lm", se = FALSE)+
+  geom_smooth(aes(group = percent_white > 50), 
+              method = "lm", se = FALSE, linetype = "dashed") +
+  
+  scale_color_viridis_c(option = "plasma", name = "% White") +
   labs(
-    title = "Model Interpretation: Income, Demographics, and Disease Burden",
+    title    = "Model Interpretation: Environment, Demographics, and Health",
     subtitle = paste("Adj R-Squared:", r_sq, "| P-value:", p_val),
-    x = "Income",
-    y = "Chronic Disease Burden",
-    color = "% White"
+    x        = "Pollution Exposure (PM2.5)",
+    y        = "Obesity Rate (%)"
   ) +
   theme_minimal(base_size = 14)
 
