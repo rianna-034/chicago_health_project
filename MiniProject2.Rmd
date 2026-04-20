@@ -92,44 +92,40 @@ Row{data-height=250}
 
 Row {data-height=180}
 -----------------------------------------------------------------------
-### Value box 1
+
+### Avg Obesity Rate
 
 ```{r}
-val_pov <- paste0(round(median(df_clean$poverty_rate, na.rm = TRUE), 1), "%")
-
-valueBox(
-  value   = val_pov,
-  caption = "Median Poverty Rate (Citywide)",
-  icon    = "fa-hand-holding-dollar",
-  color   = "primary"
-)
+val <- paste0(round(mean(df_clean$obesity_rate, na.rm = TRUE), 1), "%")
+valueBox(val, caption = "Avg Obesity Rate (Citywide)",
+         icon = "fa-heart-pulse", color = "danger")
 ```
 
-### Value box 2
+### Avg Uninsured Rate
 
 ```{r}
-avg_disease <- round(mean(df_clean$hcsob_2023_2024, na.rm = TRUE), 0)
-
-valueBox(
-  value   = scales::comma(avg_disease),
-  caption = "Avg Obesity Count per Neighborhood",
-  icon    = "fa-heart-pulse",
-  color   = "danger"
-)
+val2 <- paste0(round(mean(df_clean$uninsured_rate, na.rm = TRUE), 1), "%")
+valueBox(val2, caption = "Avg Uninsured Rate (Citywide)",
+         icon = "fa-user-times", color = "warning")
 ```
 
-### Value box 3
+### Poverty ↔ Disease Correlation
 
 ```{r}
-r_val <- round(cor(df_clean$poverty_rate, df_clean$hcsob_2023_2024,
+r_val <- round(cor(df_clean$uninsured_rate, df_clean$obesity_rate,
                    use = "complete.obs"), 3)
+valueBox(r_val, caption = "Correlation: Uninsured ↔ Obesity Rate",
+         icon = "fa-arrow-trend-up",
+         color = ifelse(abs(r_val) > 0.5, "danger", "warning"))
+```
 
-valueBox(
-  value   = r_val,
-  caption = "Correlation: Poverty ↔ Disease Burden",
-  icon    = "fa-arrow-trend-up",
-  color   = ifelse(abs(r_val) > 0.5, "danger", "warning")
-)
+### High Burden Neighborhoods
+
+```{r}
+high_risk <- sum(df_clean$obesity_rate >
+                   quantile(df_clean$obesity_rate, 0.75, na.rm = TRUE))
+valueBox(high_risk, caption = "Neighborhoods in Top Obesity Quartile",
+         icon = "fa-triangle-exclamation", color = "primary")
 ```
 
 ### Value box 4
@@ -201,35 +197,35 @@ plot_ly(
   lat  = ~latitude,
   mode = "markers",
   marker = list(
-    size       = ~scales::rescale(pop_2020_2024, to = c(6, 18)),
-    color      = ~hcsob_2023_2024,
+    size       = ~rescale(obesity_rate, to = c(6, 18)),
+    color      = ~obesity_rate,
     colorscale = "Viridis",
     showscale  = TRUE,
     opacity    = 0.8
   ),
   text = ~paste0(
     "<b>", name, "</b><br>",
-    "Obesity Count: ",  scales::comma(round(hcsob_2023_2024, 0)), "<br>",
-    "Poverty Rate: ",   round(poverty_rate, 1), "%<br>",
-    "Population: ",     scales::comma(round(pop_2020_2024, 0))
+    "Obesity Rate: ",    round(obesity_rate,   2), "%<br>",
+    "Uninsured Rate: ",  round(uninsured_rate, 1), "%<br>",
+    "Air Quality: ",     round(air_quality,    1), "%<br>",
+    "Traffic Risk: ",    round(traffic_risk,   0)
   ),
   hoverinfo = "text"
 ) %>%
   layout(
     mapbox = list(
-      style  = "open-street-map",         
+      style  = "carto-positron",
       zoom   = 9,
       center = list(lon = mean(df_clean$longitude, na.rm = TRUE),
                     lat = mean(df_clean$latitude,  na.rm = TRUE))
     ),
     margin = list(l = 0, r = 0, t = 40, b = 0),
-    title  = "Interactive Spatial Distribution of Chronic Disease Burden"
+    title  = "Spatial Distribution of Obesity Rate Across Chicago Neighborhoods"
   )
 ```
 
 ### Interpretation
-Geographic clustering reveals that disease burden is spatially structured.
-This suggests localized drivers such as environmental exposure, healthcare accessibility, and neighborhood-level inequality.
+Geographic clustering confirms that disease burden is not randomly distributed. The South and West Sides show the largest, darkest markers — highest obesity rates combined with lowest air quality and highest traffic risk. North Shore neighborhoods show small pale dots, reflecting environmental privilege alongside better insurance access.
 
 
 Row {data-height=600}
@@ -259,40 +255,105 @@ Row {data-height=600}
 
 ###  Income vs Health Burden
 ```{r}
-model_p3  <- lm(hcsob_2023_2024 ~ poverty_rate, data = df_clean)
-r2_p3     <- round(summary(model_p3)$r.squared, 3)
-pv_p3     <- summary(model_p3)$coefficients[2, 4]
-pvl_p3    <- ifelse(pv_p3 < 0.001, "p < 0.001", paste0("p = ", round(pv_p3, 3)))
+model_p3 <- lm(obesity_rate ~ uninsured_rate, data = df_clean)
+r2_p3    <- round(summary(model_p3)$r.squared, 3)
+pvl_p3   <- ifelse(summary(model_p3)$coefficients[2,4] < 0.001,
+                   "p < 0.001",
+                   paste0("p = ", round(summary(model_p3)$coefficients[2,4], 3)))
 
 p3 <- ggplot(df_clean,
-             aes(x     = poverty_rate,
-                 y     = hcsob_2023_2024,
+             aes(x     = uninsured_rate,
+                 y     = obesity_rate,
                  size  = pop_2020_2024,
-                 color = hcsob_2023_2024,
+                 color = obesity_rate,
                  text  = paste0("<b>", name, "</b><br>",
-                                "Poverty Rate: ", round(poverty_rate, 1), "%<br>",
-                                "Obesity Count: ", scales::comma(round(hcsob_2023_2024, 0)), "<br>",
-                                "Population: ", scales::comma(round(pop_2020_2024, 0))))) +
+                                "Uninsured: ",   round(uninsured_rate, 1), "%<br>",
+                                "Obesity Rate: ", round(obesity_rate, 2), "%<br>",
+                                "Population: ",  scales::comma(round(pop_2020_2024, 0))))) +
   geom_point(alpha = 0.8) +
   geom_smooth(method = "lm", color = "black", se = TRUE) +
   scale_color_viridis_c() +
   scale_size_continuous(range = c(2, 8)) +
-  labs(
-    x        = "Poverty Rate (%)",
-    y        = "Obesity Count",
-    color    = "Obesity",
-    size     = "Population",
-    title    = "Poverty vs. Disease Burden with Population Context",
-    subtitle = paste0("R² = ", r2_p3, "  |  ", pvl_p3,
-                      "  ·  point size = population  ·  color = obesity count")
-  ) +
+  labs(x        = "Uninsured Rate (%)",
+       y        = "Obesity Rate (%)",
+       color    = "Obesity %",
+       size     = "Population",
+       title    = "Uninsured Rate vs. Obesity Burden",
+       subtitle = paste0("R² = ", r2_p3, "  |  ", pvl_p3,
+                         "  ·  point size = population  ·  color = obesity rate")) +
   theme_minimal(base_size = 14)
 
 ggplotly(p3, tooltip = "text")
 ```
 
 ### Interpretation
-The plot reveals a strong negative relationship between a neighborhood's white population share and its obesity rate (R² = 0.60, p < 0.001) — meaning race and place together are among the strongest predictors of metabolic health in Chicago. Neighborhoods in the red quadrant, predominantly non-white communities on the South and West Sides, cluster with the largest bubbles, indicating that high obesity, high uninsured rates, and low white population share arrive together as a package, not independently. The green quadrant tells the opposite story: whiter, North Shore neighborhoods sit below the city median on obesity with smaller bubbles, signaling better insurance coverage and likely better access to preventive care. This is not a story about individual behavior — it is a structural one. The same zip codes that faced decades of disinvestment, food desert conditions, and limited healthcare infrastructure are precisely the ones the regression line singles out as highest risk.
+A strong positive relationship exists between uninsured rate and obesity burden. As uninsured rates rise, obesity rates climb consistently — communities where residents cannot afford healthcare also cannot access preventive metabolic care. The largest bubbles (most populous neighborhoods) cluster at moderate-to-high uninsured rates, meaning this burden affects a large share of Chicago's total population.
+
+Row {data-height=600}
+-----------------------------------------------------------------------
+
+### Racial Composition vs. Metabolic Health
+
+```{r}
+m   <- lm(obesity_rate ~ percent_white, data = df_clean)
+r2  <- round(summary(m)$r.squared, 3)
+pvl <- ifelse(summary(m)$coefficients[2,4] < 0.001, "p < 0.001",
+              paste0("p = ", round(summary(m)$coefficients[2,4], 3)))
+
+df_plot <- df_clean %>%
+  filter(!is.na(obesity_rate), !is.na(percent_white)) %>%
+  mutate(hover = paste0("<b>", name, "</b><br>",
+                        "% White: ",      round(percent_white,  1), "%<br>",
+                        "Obesity Rate: ", round(obesity_rate,   2), "%<br>",
+                        "Uninsured: ",    round(uninsured_rate, 1), "%"))
+
+extremes <- df_plot %>%
+  filter(obesity_rate > quantile(obesity_rate, 0.90) |
+         obesity_rate < quantile(obesity_rate, 0.10))
+
+med_x <- median(df_plot$percent_white)
+med_y <- median(df_plot$obesity_rate)
+
+p_demo <- ggplot(df_plot, aes(x = percent_white, y = obesity_rate)) +
+  annotate("rect", xmin = med_x, xmax = 100,
+           ymin = -Inf, ymax = med_y, fill = "#27AE60", alpha = 0.06) +
+  annotate("rect", xmin = -Inf, xmax = med_x,
+           ymin = med_y, ymax = Inf,  fill = "#C0392B", alpha = 0.06) +
+  geom_vline(xintercept = med_x, linetype = "dashed", color = "grey60") +
+  geom_hline(yintercept = med_y, linetype = "dashed", color = "grey60") +
+  geom_smooth(method = "lm", color = "#D55E00", fill = "#D55E00", alpha = 0.12) +
+  geom_point(aes(color = obesity_rate, size = uninsured_rate, text = hover),
+             alpha = 0.85) +
+  geom_text(data = extremes, aes(label = name),
+            size = 2.8, vjust = -1, color = "grey30", fontface = "italic") +
+  annotate("text", x = 78, y = min(df_plot$obesity_rate) + 0.05,
+           label = "Low burden", color = "#27AE60", size = 3.5, fontface = "bold") +
+  annotate("text", x = 2,  y = max(df_plot$obesity_rate) - 0.05,
+           label = "High burden", color = "#C0392B",
+           size = 3.5, fontface = "bold", hjust = 0) +
+  annotate("text", x = 45, y = max(df_plot$obesity_rate),
+           label = paste0("R² = ", r2, "  |  ", pvl),
+           size = 3.8, color = "#D55E00", fontface = "italic", hjust = 0) +
+  scale_color_gradient(low = "#2D708EFF", high = "#C0392B", name = "Obesity (%)") +
+  scale_size_continuous(range = c(2, 9), name = "Uninsured (%)") +
+  scale_x_continuous(labels = function(x) paste0(x, "%")) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  theme_minimal(base_size = 13) +
+  theme(plot.title       = element_text(face = "bold", size = 15),
+        plot.subtitle    = element_text(color = "grey50", size = 11),
+        panel.grid.minor = element_blank()) +
+  labs(title    = "Racial Composition vs. Obesity Rates",
+       subtitle = "Point size = uninsured rate  ·  shading = burden quadrants  ·  labeled = top & bottom 10%",
+       x = "% White population", y = "Obesity rate (%)")
+
+ggplotly(p_demo, tooltip = "text") %>%
+  layout(hoverlabel = list(bgcolor = "white", font = list(size = 13)))
+```
+### Interpretation
+
+A strong negative relationship exists between % white population and obesity rate (R² = 0.60, p < 0.001). Predominantly non-white neighborhoods on the South and West Sides cluster in the red quadrant with the largest bubbles — highest obesity AND highest uninsured rates arriving together. This is a structural story: the same communities that face insurance barriers also face the greatest metabolic health burden.
+
+
 
 Row {data-height=600}
 -----------------------------------------------------------------------
