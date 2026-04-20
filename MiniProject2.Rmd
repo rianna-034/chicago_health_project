@@ -217,7 +217,7 @@ plot_ly(
 ) %>%
   layout(
     mapbox = list(
-      style  = "open-street-map",          # CHANGED from carto-positron
+      style  = "open-street-map",         
       zoom   = 9,
       center = list(lon = mean(df_clean$longitude, na.rm = TRUE),
                     lat = mean(df_clean$latitude,  na.rm = TRUE))
@@ -293,109 +293,6 @@ ggplotly(p3, tooltip = "text")
 
 ### Interpretation
 The plot reveals a strong negative relationship between a neighborhood's white population share and its obesity rate (R² = 0.60, p < 0.001) — meaning race and place together are among the strongest predictors of metabolic health in Chicago. Neighborhoods in the red quadrant, predominantly non-white communities on the South and West Sides, cluster with the largest bubbles, indicating that high obesity, high uninsured rates, and low white population share arrive together as a package, not independently. The green quadrant tells the opposite story: whiter, North Shore neighborhoods sit below the city median on obesity with smaller bubbles, signaling better insurance coverage and likely better access to preventive care. This is not a story about individual behavior — it is a structural one. The same zip codes that faced decades of disinvestment, food desert conditions, and limited healthcare infrastructure are precisely the ones the regression line singles out as highest risk.
-
-Row {data-height=600}
------------------------------------------------------------------------
-
-
-### Demographic Trends & Metabolic Health
-
-```{r}
-m   <- lm(obesity_rate ~ percent_white, data = df)
-r2  <- round(summary(m)$r.squared, 3)
-pvl <- ifelse(summary(m)$coefficients[2,4] < 0.001, "p < 0.001", 
-              paste0("p = ", round(summary(m)$coefficients[2,4], 3)))
-
-df <- df %>%
-  filter(!is.na(obesity_rate), !is.na(percent_white)) %>%
-  mutate(hover    = paste0("<b>", name, "</b><br>",
-                           "% White: ", round(percent_white, 1), "%<br>",
-                           "Obesity: ", round(obesity_rate,  2), "%<br>",
-                           "Uninsured: ", round(uninsured_rate, 1), "%"),
-         extreme  = obesity_rate > quantile(obesity_rate, 0.90) | 
-                    obesity_rate < quantile(obesity_rate, 0.10),
-         med_x    = median(percent_white),
-         med_y    = median(obesity_rate))
-
-p_demo <- ggplot(df, aes(x = percent_white, y = obesity_rate)) +
-  annotate("rect", xmin = df$med_x[1], xmax = 100,
-           ymin = -Inf, ymax = df$med_y[1], fill = "#27AE60", alpha = 0.06) +
-  annotate("rect", xmin = -Inf, xmax = df$med_x[1],
-           ymin = df$med_y[1], ymax = Inf,  fill = "#C0392B", alpha = 0.06) +
-  geom_vline(xintercept = df$med_x[1], linetype = "dashed", color = "grey60") +
-  geom_hline(yintercept = df$med_y[1], linetype = "dashed", color = "grey60") +
-  geom_smooth(method = "lm", color = "#D55E00", fill = "#D55E00", alpha = 0.12) +
-  geom_point(aes(color = obesity_rate, size = uninsured_rate, text = hover), alpha = 0.85) +
-  geom_text(data = filter(df, extreme), aes(label = name),
-            size = 2.8, vjust = -1, color = "grey30", fontface = "italic") +
-  annotate("text", x = 82, y = min(df$obesity_rate) + 0.05,
-           label = "Low burden",  color = "#27AE60", size = 3.5, fontface = "bold") +
-  annotate("text", x = 3,  y = max(df$obesity_rate) - 0.05,
-           label = "High burden", color = "#C0392B", size = 3.5, fontface = "bold", hjust = 0) +
-  annotate("text", x = 50, y = max(df$obesity_rate),
-           label = paste0("R² = ", r2, "  |  ", pvl),
-           size = 3.8, color = "#D55E00", fontface = "italic", hjust = 0) +
-  scale_color_gradient(low = "#2D708EFF", high = "#C0392B", name = "Obesity (%)") +
-  scale_size_continuous(range = c(2, 9), name = "Uninsured (%)") +
-  scale_x_continuous(labels = label_percent(scale = 1)) +
-  scale_y_continuous(labels = label_percent(scale = 1)) +
-  theme_minimal(base_size = 13) +
-  theme(plot.title = element_text(face = "bold", size = 15),
-        panel.grid.minor = element_blank()) +
-  labs(title    = "Racial Composition vs. Obesity Rates",
-       subtitle = "Point size = uninsured rate  ·  shading = burden quadrants  ·  labeled = top & bottom 10%",
-       x = "% White population", y = "Obesity rate (%)")
-
-ggplotly(p_demo, tooltip = "text") %>%
-  layout(hoverlabel = list(bgcolor = "white", font = list(size = 13)))
-```
-
-### Interpretation
-The data reveals a negative correlation between the percentage of White residents and local obesity rates. This suggests that neighborhoods with higher concentrations of minority residents often face systemic barriers to metabolic health, such as "food deserts" or limited recreational infrastructure. When combined with the PM 
-2.5 data, it becomes clear that environmental and social stressors disproportionately cluster in Chicago's non-white community areas.
-
-Row {data-height=600}
------------------------------------------------------------------------
-
-### Chicago Neighborhoods — Obesity & Insurance Coverage
-
-```{r}
-p_map <- ggplot() +
-  geom_point(
-    data = df %>% filter(!is.na(obesity_rate), !is.na(latitude)),
-    aes(
-      x    = longitude,
-      y    = latitude,
-      size  = obesity_rate,
-      color = uninsured_rate,
-      text  = paste0(
-        "<b>", name, "</b><br>",
-        "Obesity Rate: ",   round(obesity_rate,   1), "%<br>",
-        "Uninsured Rate: ", round(uninsured_rate, 1), "%<br>",
-        "Poverty Rate: ",   round(poverty_rate,   1), "%"
-      )
-    ),
-    alpha = 0.85
-  ) +
-  scale_color_gradient(low = "lightblue", high = "#922b21", name = "Uninsured (%)") +
-  scale_size_continuous(range = c(2, 10), name = "Obesity Rate (%)") +
-  coord_cartesian(xlim = c(-87.95, -87.52), ylim = c(41.63, 42.03)) +
-  theme_void(base_size = 13) +
-  theme(
-    plot.title      = element_text(face = "bold", hjust = 0.5, size = 15),
-    plot.subtitle   = element_text(hjust = 0.5, color = "grey50"),
-    legend.position = "right"
-  ) +
-  labs(
-    title    = "Obesity & Insurance Coverage by Neighborhood",
-    subtitle = "Bubble size = Obesity Rate  ·  Color = Uninsured Rate"
-  )
-
-ggplotly(p_map, tooltip = "text")
-```
-
-### Interpretation
-A clear geographic divide emerges: South and West Side neighborhoods cluster with both the largest bubbles (high obesity) and the darkest colors (high uninsured rates), while North Shore communities show small, pale dots. Geography alone strongly predicts health outcomes — confirming that place-based intervention is essential.
 
 Row {data-height=600}
 -----------------------------------------------------------------------
