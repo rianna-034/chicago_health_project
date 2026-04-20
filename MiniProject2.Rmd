@@ -362,38 +362,37 @@ Row {data-height=600}
 ```{r}
 heat_data <- df_clean %>%
   mutate(
-    poverty_bin = ntile(poverty_rate, 5),
-    race_bin    = ntile(percent_white, 5)
+    
+    pollution_bin = ntile(pmc_2020, 5), 
+    race_bin      = ntile(pct_w_2020_2024, 5)
   ) %>%
-  group_by(poverty_bin, race_bin) %>%
+  group_by(pollution_bin, race_bin) %>%
   summarise(
-    avg_disease = mean(hcsob_2023_2024, na.rm = TRUE),
-    count       = n(),
-    .groups     = "drop"
+    avg_disease = mean(obesity_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
   )
 
 plot_ly(
-  heat_data,
-  x = ~factor(poverty_bin,
-              labels = c("Lowest","Low","Mid","High","Highest")),
-  y = ~factor(race_bin, levels = 5:1,          # REVERSED so highest % white is at top
-              labels = c("Highest % White","High","Mid","Low","Lowest % White")),
-  z        = ~avg_disease,
-  type     = "heatmap",
+  data = heat_data,
+  x = ~factor(pollution_bin, labels = c("Lowest", "Low", "Mid", "High", "Highest")),
+  y = ~factor(race_bin, labels = c("Lowest % White", "Low", "Mid", "High", "Highest % White")),
+  z = ~avg_disease,
+  type = "heatmap",
   colorscale = "Viridis",
-  zsmooth  = "best",
-  text = ~paste0(
-    "Poverty Group: ",   poverty_bin, "<br>",
-    "% White Group: ",   race_bin,    "<br>",
-    "Avg Obesity Count: ", round(avg_disease, 0), "<br>",
-    "Neighborhoods: ",   count
+  zsmooth = "best",
+  text = ~paste(
+    "Pollution Level:", pollution_bin,
+    "<br>Demographic Group:", race_bin,
+    "<br>Avg Obesity Rate:", round(avg_disease, 2), "%",
+    "<br>Neighborhoods:", count
   ),
   hoverinfo = "text"
 ) %>%
   layout(
-    title  = "Overlapping Effects of Poverty and Demographics on Disease Burden",
-    xaxis  = list(title = "Poverty Level"),
-    yaxis  = list(title = "Demographic Composition (% White)")
+    title = "The Intersection of Air Quality, Race, and Health",
+    xaxis = list(title = "PM2.5 Exposure Level (Bins)"),
+    yaxis = list(title = "Demographic Composition (% White)")
   )
 ```
 
