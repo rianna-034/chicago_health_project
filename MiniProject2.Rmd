@@ -47,10 +47,10 @@ library(scales)
 df <- read.csv("Chi_Health_Atlas_Data(1).csv",
                check.names = FALSE)
 
-# Clean names
+
 names(df) <- tolower(gsub("-|\\.", "_", names(df)))
 
-# Derive all rates up front so every chunk can use them
+
 df <- df %>%
   mutate(
     obesity_rate  = hcsob_2023_2024  / pop_2020_2024 * 100,
@@ -65,7 +65,6 @@ df <- df %>%
     log_pop        = log(pop_2020_2024)
   )
 
-# df_clean = drop NAs — used by violin, heatmap, model table, data explorer
 df_clean <- df %>%
   drop_na() %>%
   mutate(
