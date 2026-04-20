@@ -440,73 +440,6 @@ ggplotly(p_model, tooltip = "text")
 ### Interpretation
 The model shows a clear positive relationship between poverty rate and chronic disease burden. The two split regression lines — one for majority-white neighborhoods (% white > 50) and one for minority-majority neighborhoods — reveal that the slope is steeper in non-white communities: the same increase in poverty translates to a larger jump in disease burden, confirming an interaction effect between race and poverty that compounds health risk.
 
-Row{data-height=300}
--------------------------------------------------------
-
-### INTERACTIVE MODEL TABLE
-```{r}
-library(broom) 
-library(DT)
-model <- lm(
-  obesity_rate ~ pmc_2020 * percent_white + pop_2020_2024,
-  data = df_clean
-)
-model_table <- broom::tidy(model) %>%
-  mutate(
-    term = c("Intercept", "Pollution (PM2.5)", "Demographics (% White)", 
-             "Total Population", "Pollution x Demographics (Interaction)"),
-    estimate = round(estimate, 4),
-    std.error = round(std.error, 4),
-    statistic = round(statistic, 2),
-    p.value = format.pval(p.value, digits = 3, eps = 0.001)
-  )
-
-datatable(
-  model_table,
-  colnames = c("Predictor", "Coefficient (β)", "Std. Error", "t-statistic", "p-value"),
-  options = list(dom = 't', ordering = TRUE),
-  rownames = FALSE
-)
-```
-
-
-Row {data-height=300}
------------------------------------------------------------------------
-
-Data Explorer
-```{r}
-datatable(
-  df_clean %>%
-    select(
-      Neighborhood       = name,
-      `Poverty Rate (%)`    = poverty_rate,
-      `% White`             = percent_white,
-      `Obesity Rate (%)`    = obesity_rate,
-      `Uninsured Rate (%)`  = uninsured_rate,
-      `Obesity Count`       = hcsob_2023_2024,
-      Population            = pop_2020_2024
-    ) %>%
-    mutate(across(where(is.numeric), ~round(.x, 2))),
-  options  = list(pageLength = 8, scrollX = TRUE),
-  rownames = FALSE
-)
-```
-### Purpose
-This interactive table ensures:
-Transparency
-Reproducibility
-Direct engagement with raw data
-Users can explore, filter, and validate all findings.
-
-Row {data-height=300}
------------------------------------------------------------------------
-
-### Final Scientific Interpretation
-Health disparities in Chicago emerge from systemic, interconnected factors:
-Economic inequality drives differential exposure and access
-Demographic patterns reflect historical structural inequities
-Spatial clustering indicates place-based risk environments
-
 Row {data-height=600}
 -----------------------------------------------------------------------
 
@@ -562,6 +495,77 @@ pvl <- ifelse(summary(m)$coefficients[2,4] < 0.001,
 r2
 pvl
 ```
+
+Row{data-height=300}
+-------------------------------------------------------
+
+### INTERACTIVE MODEL TABLE
+
+```{r}
+library(broom) 
+library(DT)
+model <- lm(
+  obesity_rate ~ pmc_2020 * percent_white + pop_2020_2024,
+  data = df_clean
+)
+model_table <- broom::tidy(model) %>%
+  mutate(
+    term = c("Intercept", "Pollution (PM2.5)", "Demographics (% White)", 
+             "Total Population", "Pollution x Demographics (Interaction)"),
+    estimate = round(estimate, 4),
+    std.error = round(std.error, 4),
+    statistic = round(statistic, 2),
+    p.value = format.pval(p.value, digits = 3, eps = 0.001)
+  )
+
+datatable(
+  model_table,
+  colnames = c("Predictor", "Coefficient (β)", "Std. Error", "t-statistic", "p-value"),
+  options = list(dom = 't', ordering = TRUE),
+  rownames = FALSE
+)
+```
+
+
+Row {data-height=300}
+-----------------------------------------------------------------------
+
+Data Explorer
+```{r}
+datatable(
+  df_clean %>%
+    select(
+      Neighborhood       = name,
+      `Poverty Rate (%)`    = poverty_rate,
+      `% White`             = percent_white,
+      `Obesity Rate (%)`    = obesity_rate,
+      `Uninsured Rate (%)`  = uninsured_rate,
+      `Obesity Count`       = hcsob_2023_2024,
+      Population            = pop_2020_2024
+    ) %>%
+    mutate(across(where(is.numeric), ~round(.x, 2))),
+  options  = list(pageLength = 8, scrollX = TRUE),
+  rownames = FALSE
+)
+```
+
+### Purpose
+This interactive table ensures:
+Transparency
+Reproducibility
+Direct engagement with raw data
+Users can explore, filter, and validate all findings.
+
+Row {data-height=300}
+-----------------------------------------------------------------------
+
+### Final Scientific Interpretation
+Health disparities in Chicago emerge from systemic, interconnected factors:
+Economic inequality drives differential exposure and access
+Demographic patterns reflect historical structural inequities
+Spatial clustering indicates place-based risk environments
+
+
 Row {data-height=600}
 -----------------------------------------------------------------------
 
@@ -569,3 +573,9 @@ Row {data-height=600}
 Chronic disease burden is not randomly distributed —
 it is shaped by a combination of social, economic, and geographic determinants.
 This analysis provides a framework for targeted, data-driven public health intervention
+
+***
+
+**Project Repository:** [View on GitHub--Under miniproject2.rmd--](https://github.com/rianna-034/chicago_health_project.git)  
+**Authors:** Aanshi Vashi, Pratham Shah, Riaam Al Frijie 
+**code lines 510-592 by Riaam- added by pratham due to technical issues**
