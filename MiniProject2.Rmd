@@ -444,35 +444,41 @@ Row{data-height=300}
 -------------------------------------------------------
 
 ### INTERACTIVE MODEL TABLE
-
-```{r model, echo=FALSE}
+```{r}
 library(broom) 
+library(DT)
 model <- lm(
-  HCSOB_2023_2024 ~ PMC_2020 * PCT_W_2020_2024 + POP_2020_2024,
+  obesity_rate ~ pmc_2020 * percent_white + pop_2020_2024,
   data = df_clean
 )
-
-model_table <- broom::tidy(model)
+model_table <- broom::tidy(model) %>%
+  mutate(
+    term = c("Intercept", "Pollution (PM2.5)", "Demographics (% White)", 
+             "Total Population", "Pollution x Demographics (Interaction)"),
+    estimate = round(estimate, 4),
+    std.error = round(std.error, 4),
+    statistic = round(statistic, 2),
+    p.value = format.pval(p.value, digits = 3, eps = 0.001)
+  )
 
 datatable(
   model_table,
-  options = list(
-    pageLength = 5,
-    dom = 't',
-    ordering = TRUE
-  ),
+  colnames = c("Predictor", "Coefficient (β)", "Std. Error", "t-statistic", "p-value"),
+  options = list(dom = 't', ordering = TRUE),
   rownames = FALSE
 )
 ```
+
 
 Row {data-height=300}
 -----------------------------------------------------------------------
 
 Data Explorer
 ```{r}
+datatable(
   df_clean %>%
     select(
-      Neighborhood  = name,
+      Neighborhood       = name,
       `Poverty Rate (%)`    = poverty_rate,
       `% White`             = percent_white,
       `Obesity Rate (%)`    = obesity_rate,
