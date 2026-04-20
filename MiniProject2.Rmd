@@ -538,8 +538,6 @@ ggplotly(p_income_obesity, tooltip = "text")
 ```
 Row {data-height=400}
 -----------------------------------------------------------------------
-### Row {data-height=400}
-
 ### Model Summary
 ```{r}
 model_income <- lm(obesity_rate ~ poverty_rate, data = df_clean)
@@ -566,29 +564,6 @@ pvl
 ```
 Row {data-height=600}
 -----------------------------------------------------------------------
-### Key Metrics
-```{r}
-valueBox(
-  paste0(round(mean(df_clean$obesity_rate, na.rm = TRUE), 1), "%"),
-  caption = "Average Obesity Rate",
-  icon = icon("heartbeat"),
-  color = "danger"
-)
-
-valueBox(
-  round(mean(df_clean$poverty_rate, na.rm = TRUE), 2),
-  caption = "Average Poverty Rate",
-  icon = icon("dollar-sign"),
-  color = "warning"
-)
-
-valueBox(
-  round(cor(df_clean$poverty_rate, df_clean$obesity_rate), 3),
-  caption = "Correlation: Poverty ↔ Obesity",
-  icon = icon("chart-line"),
-  color = "primary"
-)
-```
 
 ### Conclusion
 Chronic disease burden is not randomly distributed —
