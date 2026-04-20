@@ -507,6 +507,89 @@ Economic inequality drives differential exposure and access
 Demographic patterns reflect historical structural inequities
 Spatial clustering indicates place-based risk environments
 
+Row {data-height=600}
+-----------------------------------------------------------------------
+
+
+### Income vs Obesity Relationship
+```{r}
+p_income_obesity <- ggplot(df_clean,
+  aes(x = poverty_rate,
+      y = obesity_rate,
+      size = pop_2020_2024,
+      color = obesity_rate,
+      text = paste0("<b>", name, "</b><br>",
+                    "Poverty Rate: ", round(poverty_rate, 2), "<br>",
+                    "Obesity Rate: ", round(obesity_rate, 2), "%"))
+) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "lm", color = "black") +
+  scale_color_viridis_c() +
+  scale_size(range = c(2, 8)) +
+  labs(
+    x = "Poverty Rate",
+    y = "Obesity Rate (%)",
+    title = "Income vs Obesity Relationship",
+    subtitle = "Point size = population · color = obesity rate"
+  ) +
+  theme_minimal(base_size = 14)
+
+ggplotly(p_income_obesity, tooltip = "text")
+```
+Row {data-height=400}
+-----------------------------------------------------------------------
+### Row {data-height=400}
+
+### Model Summary
+```{r}
+model_income <- lm(obesity_rate ~ poverty_rate, data = df_clean)
+summary(model_income)
+```
+### Interpretation
+
+Higher poverty rates are associated with higher obesity rates. This suggests that limited economic resources may restrict access to healthy food, healthcare, and lifestyle opportunities, reinforcing structural health disparities.
+
+Row {data-height=600}
+-----------------------------------------------------------------------
+### Racial Composition vs. Metabolic Health
+```{r}
+m <- lm(obesity_rate ~ percent_white, data = df_clean)
+
+r2 <- round(summary(m)$r.squared, 3)
+
+pvl <- ifelse(summary(m)$coefficients[2,4] < 0.001,
+              "p < 0.001",
+              paste0("p = ", round(summary(m)$coefficients[2,4], 3)))
+
+r2
+pvl
+```
+Row {data-height=600}
+-----------------------------------------------------------------------
+### Key Metrics
+```{r}
+valueBox(
+  paste0(round(mean(df_clean$obesity_rate, na.rm = TRUE), 1), "%"),
+  caption = "Average Obesity Rate",
+  icon = icon("heartbeat"),
+  color = "danger"
+)
+
+valueBox(
+  round(mean(df_clean$poverty_rate, na.rm = TRUE), 2),
+  caption = "Average Poverty Rate",
+  icon = icon("dollar-sign"),
+  color = "warning"
+)
+
+valueBox(
+  round(cor(df_clean$poverty_rate, df_clean$obesity_rate), 3),
+  caption = "Correlation: Poverty ↔ Obesity",
+  icon = icon("chart-line"),
+  color = "primary"
+)
+```
+
 ### Conclusion
 Chronic disease burden is not randomly distributed —
 it is shaped by a combination of social, economic, and geographic determinants.
