@@ -161,29 +161,28 @@ Row {data-height=600}
 
 ### Demographic Structure vs Health
 ```{r}
-df_clean <- df_clean %>%
-  mutate(
-    income_group = ntile(PMC_2020, 4) %>%
-      factor(labels = c("Low", "Lower-Mid", "Upper-Mid", "High"))
-  )
-
-p4 <- ggplot(df_clean, aes(x = income_group, y = HCSOB_2023_2024, fill = income_group)) +
-  geom_violin(alpha = 0.6) +
-  geom_boxplot(width = 0.2, fill = "white") +
-  scale_fill_viridis_d() +
-  labs(
-    x = "Income Group",
-    y = "Chronic Disease Burden",
-    title = "Disease Burden Across Income Groups"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(legend.position = "none")
-
-ggplotly(p4)
+plot_ly(df_clean,
+        x        = ~access_group,
+        y        = ~obesity_rate,
+        color    = ~access_group,
+        colors   = viridis::viridis(4),
+        type     = "violin",
+        box      = list(visible = TRUE),
+        meanline = list(visible = TRUE),
+        text     = ~paste0("<b>", name, "</b><br>",
+                           "Access Group: ",  access_group, "<br>",
+                           "Obesity Rate: ",  round(obesity_rate, 2), "%<br>",
+                           "Uninsured: ",     round(uninsured_rate, 1), "%"),
+        hoverinfo = "text") %>%
+  layout(
+    title      = "Obesity Rate by Insurance Access Group",
+    xaxis      = list(title = "Uninsured Rate Group"),
+    yaxis      = list(title = "Obesity Rate (%)"),
+    showlegend = FALSE,
+    hoverlabel = list(bgcolor = "white", font = list(size = 13))
 ```
 ### Interpretation
-Demographic composition shows strong alignment with health disparities.
-This reflects structural and historical inequalities rather than inherent biological differences.
+Neighborhoods with the highest uninsured rates carry significantly greater obesity burden. The distribution widens at higher uninsured levels, reflecting that barriers to preventive care compound over time — uninsured residents skip screenings, delay treatment, and face worse metabolic outcomes as a result.
 
 Row {data-height=600}
 -----------------------------------------------------------------------
